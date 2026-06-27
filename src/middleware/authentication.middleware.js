@@ -4,7 +4,7 @@ import { User } from "../../DB/models/user.model.js";
 export const isAuthenticated = async (req, res, next) => {
   try {
     const { authorization } = req.headers;
-    const bearerKey = process.env.BEARER_KEY || "Bearer";
+    const bearerKey = (process.env.BEARER_KEY || "Bearer").trim();
 
     if (!authorization?.startsWith(`${bearerKey} `)) {
       return next(new Error("Token is required", { cause: 401 }));

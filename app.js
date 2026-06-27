@@ -10,6 +10,22 @@ import adminRouter from "./src/modules/admin/admin.router.js";
 
 dotenv.config();
 
+// Normalize env vars: trim stray whitespace/newlines that can be introduced
+// when values are added through some deployment dashboards/CLIs.
+for (const key of [
+  "MONGO_URI",
+  "JWT_SECRET",
+  "SALT_ROUND",
+  "BEARER_KEY",
+  "CLIENT_URLS",
+  "NODE_ENV",
+  "PORT",
+]) {
+  if (typeof process.env[key] === "string") {
+    process.env[key] = process.env[key].trim();
+  }
+}
+
 const app = express();
 
 const whiteList = (process.env.CLIENT_URLS || "")
