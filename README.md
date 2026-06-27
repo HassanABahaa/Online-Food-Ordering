@@ -2,6 +2,21 @@
 
 Full-stack prototype for an online food ordering application, built as a hiring task for Electro Pi.
 
+## Live Demo
+
+- **Frontend (live app):** https://online-food-ordering-frontend-six.vercel.app
+- **Backend API base URL:** https://online-food-ordering-api-eight.vercel.app
+- **GitHub repository:** https://github.com/HassanABahaa/Online-Food-Ordering
+
+### Admin login (for testing the dashboard)
+
+```txt
+Email: admin@foodapp.com
+Password: Admin123456
+```
+
+You can also register a new regular user from the live app to test the full customer flow (browse menu, cart, checkout, order tracking).
+
 ## Features
 
 - Complete food menu with images, prices, categories, and search.
