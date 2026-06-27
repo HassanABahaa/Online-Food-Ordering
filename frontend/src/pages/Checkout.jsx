@@ -97,6 +97,9 @@ const Checkout = () => {
           <span>{t("phone")}</span>
           <input
             value={form.phone}
+            type="tel"
+            pattern="01[0125][0-9]{8}"
+            title="Phone must be an Egyptian number that starts with 010, 011, 012 or 015"
             onChange={(event) => updateField("phone", event.target.value)}
             required
           />

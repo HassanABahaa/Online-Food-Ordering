@@ -44,6 +44,10 @@ const Register = () => {
           <span>{t("userName")}</span>
           <input
             value={form.userName}
+            minLength={3}
+            maxLength={25}
+            pattern="[A-Za-z\u0600-\u06FF][A-Za-z\u0600-\u06FF0-9 _-]{2,24}"
+            title="User name must be 3-25 characters and contain only letters, numbers, spaces, _ or -"
             onChange={(event) => updateField("userName", event.target.value)}
             required
           />
@@ -62,6 +66,9 @@ const Register = () => {
           <input
             type="password"
             minLength={8}
+            maxLength={30}
+            pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,30}"
+            title="Password must include uppercase, lowercase and number"
             value={form.password}
             onChange={(event) => updateField("password", event.target.value)}
             required
@@ -71,6 +78,9 @@ const Register = () => {
           <span>{t("phone")}</span>
           <input
             value={form.phone}
+            type="tel"
+            pattern="01[0125][0-9]{8}"
+            title="Phone must be an Egyptian number that starts with 010, 011, 012 or 015"
             onChange={(event) => updateField("phone", event.target.value)}
           />
         </label>
