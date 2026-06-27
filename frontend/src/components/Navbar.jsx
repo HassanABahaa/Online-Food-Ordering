@@ -42,15 +42,19 @@ const Navbar = () => {
           <Utensils size={18} />
           <span>{t("menu")}</span>
         </NavLink>
-        <NavLink to="/cart">
-          <ShoppingCart size={18} />
-          <span>{t("cart")}</span>
-          {itemsCount > 0 && <strong className="nav-badge">{itemsCount}</strong>}
-        </NavLink>
-        <NavLink to="/orders">
-          <ClipboardList size={18} />
-          <span>{t("orders")}</span>
-        </NavLink>
+        {!isAdmin && (
+          <>
+            <NavLink to="/cart">
+              <ShoppingCart size={18} />
+              <span>{t("cart")}</span>
+              {itemsCount > 0 && <strong className="nav-badge">{itemsCount}</strong>}
+            </NavLink>
+            <NavLink to="/orders">
+              <ClipboardList size={18} />
+              <span>{t("orders")}</span>
+            </NavLink>
+          </>
+        )}
         {isAdmin && (
           <NavLink to="/admin">
             <LayoutDashboard size={18} />

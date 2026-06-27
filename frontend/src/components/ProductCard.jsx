@@ -1,9 +1,11 @@
 import { ShoppingCart } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { useLanguage } from "../context/LanguageContext";
 
 const ProductCard = ({ product }) => {
   const { language, t } = useLanguage();
+  const { isAdmin } = useAuth();
   const { addProduct } = useCart();
 
   return (
@@ -17,10 +19,12 @@ const ProductCard = ({ product }) => {
         </div>
         <div className="product-footer">
           <strong>{product.price} EGP</strong>
-          <button className="button compact" type="button" onClick={() => addProduct(product)}>
-            <ShoppingCart size={17} />
-            <span>{t("addToCart")}</span>
-          </button>
+          {!isAdmin && (
+            <button className="button compact" type="button" onClick={() => addProduct(product)}>
+              <ShoppingCart size={17} />
+              <span>{t("addToCart")}</span>
+            </button>
+          )}
         </div>
       </div>
     </article>

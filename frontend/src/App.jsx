@@ -1,7 +1,7 @@
 import { Route, Routes } from "react-router-dom";
 import AdminRoute from "./components/AdminRoute";
+import CustomerRoute from "./components/CustomerRoute";
 import Navbar from "./components/Navbar";
-import ProtectedRoute from "./components/ProtectedRoute";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminOrders from "./pages/AdminOrders";
 import AdminProducts from "./pages/AdminProducts";
@@ -23,29 +23,36 @@ const App = () => {
         <Route path="/menu" element={<Menu />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/cart" element={<Cart />} />
+        <Route
+          path="/cart"
+          element={
+            <CustomerRoute>
+              <Cart />
+            </CustomerRoute>
+          }
+        />
         <Route
           path="/checkout"
           element={
-            <ProtectedRoute>
+            <CustomerRoute requireAuth>
               <Checkout />
-            </ProtectedRoute>
+            </CustomerRoute>
           }
         />
         <Route
           path="/orders"
           element={
-            <ProtectedRoute>
+            <CustomerRoute requireAuth>
               <MyOrders />
-            </ProtectedRoute>
+            </CustomerRoute>
           }
         />
         <Route
           path="/orders/:id"
           element={
-            <ProtectedRoute>
+            <CustomerRoute requireAuth>
               <OrderDetails />
-            </ProtectedRoute>
+            </CustomerRoute>
           }
         />
         <Route

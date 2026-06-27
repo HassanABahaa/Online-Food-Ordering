@@ -1,17 +1,22 @@
-import { createContext, useContext, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { cartApi } from "../api/cart.api";
 import { useAuth } from "./AuthContext";
 
 const CartContext = createContext(null);
-const CART_KEY = "food_cart";
+const EMPTY_CART = { products: [], totalPrice: 0 };
 
-const readLocalCart = () => {
-  const saved = localStorage.getItem(CART_KEY);
-  return saved ? JSON.parse(saved) : { products: [], totalPrice: 0 };
+const getCartKey = (user) => {
+  if (!user) return "food_cart_guest";
+  return `food_cart_${user._id || user.email}`;
 };
 
-const saveLocalCart = (cart) => {
-  localStorage.setItem(CART_KEY, JSON.stringify(cart));
+const readLocalCart = (key) => {
+  const saved = localStorage.getItem(key);
+  return saved ? JSON.parse(saved) : EMPTY_CART;
+};
+
+const saveLocalCart = (key, cart) => {
+  localStorage.setItem(key, JSON.stringify(cart));
 };
 
 const calculateTotal = (products) => {
@@ -28,20 +33,31 @@ const productToCartItem = (product, quantity) => ({
 });
 
 export const CartProvider = ({ children }) => {
-  const { token } = useAuth();
-  const [cart, setCart] = useState(readLocalCart);
+  const { token, user, isAdmin } = useAuth();
+  const cartKey = getCartKey(user);
+  const [cart, setCart] = useState(() => readLocalCart(cartKey));
+
+  useEffect(() => {
+    setCart(isAdmin ? EMPTY_CART : readLocalCart(cartKey));
+  }, [cartKey, isAdmin]);
 
   const setAndSaveCart = (nextCart) => {
+    if (isAdmin) {
+      setCart(EMPTY_CART);
+      return;
+    }
+
     setCart(nextCart);
-    saveLocalCart(nextCart);
+    saveLocalCart(cartKey, nextCart);
   };
 
   const loadCart = async () => {
+    if (isAdmin) return EMPTY_CART;
     if (!token || token.startsWith("demo-")) return cart;
 
     try {
       const data = await cartApi.getCart();
-      const nextCart = data.cart || { products: [], totalPrice: 0 };
+      const nextCart = data.cart || EMPTY_CART;
       setAndSaveCart(nextCart);
       return nextCart;
     } catch (error) {
@@ -50,6 +66,8 @@ export const CartProvider = ({ children }) => {
   };
 
   const addProduct = async (product, quantity = 1) => {
+    if (isAdmin) return EMPTY_CART;
+
     if (token && !token.startsWith("demo-")) {
       try {
         const data = await cartApi.addToCart({ productId: product._id, quantity });
@@ -60,7 +78,7 @@ export const CartProvider = ({ children }) => {
       }
     }
 
-    const current = readLocalCart();
+    const current = readLocalCart(cartKey);
     const index = current.products.findIndex((item) => item.productId === product._id);
 
     if (index > -1) {
@@ -77,6 +95,8 @@ export const CartProvider = ({ children }) => {
   };
 
   const updateQuantity = async (productId, quantity) => {
+    if (isAdmin) return EMPTY_CART;
+
     if (token && !token.startsWith("demo-")) {
       try {
         const data = await cartApi.updateCart({ productId, quantity });
@@ -87,7 +107,7 @@ export const CartProvider = ({ children }) => {
       }
     }
 
-    const current = readLocalCart();
+    const current = readLocalCart(cartKey);
     current.products = current.products.map((item) =>
       item.productId === productId
         ? { ...item, quantity, totalPrice: item.itemPrice * quantity }
@@ -99,6 +119,8 @@ export const CartProvider = ({ children }) => {
   };
 
   const removeProduct = async (productId) => {
+    if (isAdmin) return EMPTY_CART;
+
     if (token && !token.startsWith("demo-")) {
       try {
         const data = await cartApi.removeFromCart(productId);
@@ -109,7 +131,7 @@ export const CartProvider = ({ children }) => {
       }
     }
 
-    const current = readLocalCart();
+    const current = readLocalCart(cartKey);
     current.products = current.products.filter((item) => item.productId !== productId);
     current.totalPrice = calculateTotal(current.products);
     setAndSaveCart(current);
@@ -117,6 +139,8 @@ export const CartProvider = ({ children }) => {
   };
 
   const clearCart = async () => {
+    if (isAdmin) return EMPTY_CART;
+
     if (token && !token.startsWith("demo-")) {
       try {
         const data = await cartApi.clearCart();
@@ -127,9 +151,8 @@ export const CartProvider = ({ children }) => {
       }
     }
 
-    const empty = { products: [], totalPrice: 0 };
-    setAndSaveCart(empty);
-    return empty;
+    setAndSaveCart(EMPTY_CART);
+    return EMPTY_CART;
   };
 
   const value = useMemo(
@@ -137,14 +160,16 @@ export const CartProvider = ({ children }) => {
       cart,
       items: cart.products || [],
       totalPrice: cart.totalPrice || 0,
-      itemsCount: (cart.products || []).reduce((count, item) => count + item.quantity, 0),
+      itemsCount: isAdmin
+        ? 0
+        : (cart.products || []).reduce((count, item) => count + item.quantity, 0),
       loadCart,
       addProduct,
       updateQuantity,
       removeProduct,
       clearCart,
     }),
-    [cart, token],
+    [cart, token, cartKey, isAdmin],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
