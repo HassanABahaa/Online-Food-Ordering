@@ -1,5 +1,6 @@
 import {
   ClipboardList,
+  Home as HomeIcon,
   LayoutDashboard,
   LogOut,
   ShoppingCart,
@@ -34,6 +35,10 @@ const Navbar = () => {
 
       <nav className="main-nav" aria-label="Main navigation">
         <NavLink to="/" end>
+          <HomeIcon size={18} />
+          <span>{t("home")}</span>
+        </NavLink>
+        <NavLink to="/menu">
           <Utensils size={18} />
           <span>{t("menu")}</span>
         </NavLink>

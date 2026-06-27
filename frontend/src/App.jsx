@@ -7,6 +7,7 @@ import AdminOrders from "./pages/AdminOrders";
 import AdminProducts from "./pages/AdminProducts";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
+import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Menu from "./pages/Menu";
 import MyOrders from "./pages/MyOrders";
@@ -18,7 +19,8 @@ const App = () => {
     <>
       <Navbar />
       <Routes>
-        <Route path="/" element={<Menu />} />
+        <Route path="/" element={<Home />} />
+        <Route path="/menu" element={<Menu />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/cart" element={<Cart />} />

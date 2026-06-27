@@ -1,5 +1,6 @@
 import { Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { productApi } from "../api/product.api";
 import ProductCard from "../components/ProductCard";
 import { categories, demoProducts } from "../data/demoData";
@@ -7,29 +8,50 @@ import { useLanguage } from "../context/LanguageContext";
 
 const Menu = () => {
   const { t } = useLanguage();
-  const [products, setProducts] = useState(demoProducts);
-  const [category, setCategory] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [products, setProducts] = useState([]);
+  const [category, setCategory] = useState(searchParams.get("category") || "");
   const [keyword, setKeyword] = useState("");
   const [notice, setNotice] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let active = true;
+
     const loadProducts = async () => {
       setLoading(true);
       try {
-        const data = await productApi.getProducts({ category, keyword });
+        const data = await productApi.getProducts();
+        if (!active) return;
         setProducts(data.products || []);
         setNotice("");
       } catch (error) {
+        if (!active) return;
         setProducts(demoProducts);
         setNotice(t("apiOffline"));
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     };
 
     loadProducts();
-  }, [category, keyword, t]);
+    return () => {
+      active = false;
+    };
+    // Fetch once; category/keyword are filtered locally for an instant response.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const selectCategory = (value) => {
+    setCategory(value);
+    const next = new URLSearchParams(searchParams);
+    if (value) {
+      next.set("category", value);
+    } else {
+      next.delete("category");
+    }
+    setSearchParams(next, { replace: true });
+  };
 
   const visibleProducts = useMemo(() => {
     const search = keyword.toLowerCase().trim();
@@ -70,7 +92,7 @@ const Menu = () => {
         <button
           className={`chip ${category === "" ? "active" : ""}`}
           type="button"
-          onClick={() => setCategory("")}
+          onClick={() => selectCategory("")}
         >
           {t("all")}
         </button>
@@ -79,7 +101,7 @@ const Menu = () => {
             className={`chip ${category === item ? "active" : ""}`}
             type="button"
             key={item}
-            onClick={() => setCategory(item)}
+            onClick={() => selectCategory(item)}
           >
             {t(item)}
           </button>
@@ -87,15 +109,30 @@ const Menu = () => {
       </section>
 
       {notice && <p className="notice">{notice}</p>}
-      {loading && <p className="muted">{t("pending")}</p>}
 
       <section className="product-grid">
-        {visibleProducts.map((product) => (
-          <ProductCard product={product} key={product._id} />
-        ))}
+        {loading
+          ? Array.from({ length: 6 }).map((_, index) => (
+              <article className="product-card skeleton-card" key={index} aria-hidden="true">
+                <div className="skeleton-image" />
+                <div className="product-content">
+                  <div>
+                    <div className="skeleton-line short" />
+                    <div className="skeleton-line" />
+                    <div className="skeleton-line" />
+                  </div>
+                  <div className="skeleton-line short" />
+                </div>
+              </article>
+            ))
+          : visibleProducts.map((product) => (
+              <ProductCard product={product} key={product._id} />
+            ))}
       </section>
 
-      {!visibleProducts.length && <section className="empty-state">{t("noProducts")}</section>}
+      {!loading && !visibleProducts.length && (
+        <section className="empty-state">{t("noProducts")}</section>
+      )}
     </main>
   );
 };
