@@ -17,13 +17,20 @@ const whiteList = (process.env.CLIENT_URLS || "")
   .map((url) => url.trim())
   .filter(Boolean);
 
+const allowAllOrigins = whiteList.includes("*");
+
 app.use((req, res, next) => {
   const origin = req.header("origin");
 
-  if (!origin || whiteList.includes(origin)) {
+  if (!origin || allowAllOrigins || whiteList.includes(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin || "*");
     res.setHeader("Access-Control-Allow-Headers", "*");
     res.setHeader("Access-Control-Allow-Methods", "*");
+
+    if (req.method === "OPTIONS") {
+      return res.sendStatus(204);
+    }
+
     return next();
   }
 
