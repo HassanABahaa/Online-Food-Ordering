@@ -16,6 +16,18 @@ router.post(
 );
 
 router.post(
+  "/verify-email",
+  validation(authSchema.verifyEmail),
+  asyncHandler(authController.verifyEmail),
+);
+
+router.post(
+  "/resend-verification",
+  validation(authSchema.resendVerification),
+  asyncHandler(authController.resendVerification),
+);
+
+router.post(
   "/login",
   validation(authSchema.login),
   asyncHandler(authController.login),

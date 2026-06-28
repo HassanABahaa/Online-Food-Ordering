@@ -13,6 +13,7 @@ import Menu from "./pages/Menu";
 import MyOrders from "./pages/MyOrders";
 import OrderDetails from "./pages/OrderDetails";
 import Register from "./pages/Register";
+import VerifyEmail from "./pages/VerifyEmail";
 
 const App = () => {
   return (
@@ -23,6 +24,7 @@ const App = () => {
         <Route path="/menu" element={<Menu />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
         <Route
           path="/cart"
           element={

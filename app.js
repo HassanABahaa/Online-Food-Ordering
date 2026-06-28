@@ -20,6 +20,8 @@ for (const key of [
   "CLIENT_URLS",
   "NODE_ENV",
   "PORT",
+  "EMAIL_USER",
+  "EMAIL_PASS",
 ]) {
   if (typeof process.env[key] === "string") {
     process.env[key] = process.env[key].trim();

@@ -14,7 +14,27 @@ export const register = async (req, res) => {
 
   return res.status(201).json({
     success: true,
-    msg: "User registered successfully",
+    msg: "Verification code sent to your email",
+    data,
+  });
+};
+
+export const verifyEmail = async (req, res) => {
+  const data = await authService.verifyEmail(req.body);
+
+  return res.status(200).json({
+    success: true,
+    msg: "Email verified successfully",
+    data,
+  });
+};
+
+export const resendVerification = async (req, res) => {
+  const data = await authService.resendVerification(req.body);
+
+  return res.status(200).json({
+    success: true,
+    msg: data.alreadyVerified ? "Email is already verified" : "Verification code sent to your email",
     data,
   });
 };

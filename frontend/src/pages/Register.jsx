@@ -26,8 +26,12 @@ const Register = () => {
     setLoading(true);
 
     try {
-      await register(form);
-      navigate("/");
+      const data = await register(form);
+      if (data.token) {
+        navigate("/");
+        return;
+      }
+      navigate("/verify-email", { state: { email: data.email || form.email } });
     } catch (err) {
       setError(err.message);
     } finally {

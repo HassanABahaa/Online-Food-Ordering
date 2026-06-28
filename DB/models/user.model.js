@@ -10,6 +10,10 @@ const userSchema = new Schema(
     address: { type: String },
     role: { type: String, enum: ["user", "admin"], default: "user" },
     isActive: { type: Boolean, default: true },
+    isVerified: { type: Boolean, default: true },
+    emailOtpHash: { type: String },
+    emailOtpExpires: { type: Date },
+    emailVerifiedAt: { type: Date },
   },
   { timestamps: true },
 );

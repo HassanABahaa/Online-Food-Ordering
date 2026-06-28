@@ -19,6 +19,7 @@ const createDemoAuth = (payload, role = "user") => {
     address: payload.address || "",
     role,
     isActive: true,
+    isVerified: true,
   };
 
   return {
@@ -72,15 +73,23 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (payload) => {
     try {
-      const data = await authApi.register(payload);
-      saveSession(data);
-      return data;
+      return await authApi.register(payload);
     } catch (error) {
       if (!isNetworkError(error)) throw error;
       const data = createDemoAuth(payload);
       saveSession(data);
       return data;
     }
+  };
+
+  const verifyEmail = async (payload) => {
+    const data = await authApi.verifyEmail(payload);
+    saveSession(data);
+    return data;
+  };
+
+  const resendVerification = async (payload) => {
+    return authApi.resendVerification(payload);
   };
 
   const login = async (payload) => {
@@ -109,6 +118,8 @@ export const AuthProvider = ({ children }) => {
       isAuthenticated: Boolean(token && user),
       isAdmin: user?.role === "admin",
       register,
+      verifyEmail,
+      resendVerification,
       login,
       logout,
     }),
