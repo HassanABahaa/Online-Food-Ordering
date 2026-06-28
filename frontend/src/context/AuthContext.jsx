@@ -6,28 +6,6 @@ const AuthContext = createContext(null);
 const TOKEN_KEY = "food_token";
 const USER_KEY = "food_user";
 
-const isNetworkError = (error) => {
-  return error.message === "Failed to fetch" || error.message.includes("Network");
-};
-
-const createDemoAuth = (payload, role = "user") => {
-  const user = {
-    _id: role === "admin" ? "demo-admin" : "demo-user",
-    userName: payload.userName || payload.email?.split("@")[0] || "Demo User",
-    email: payload.email,
-    phone: payload.phone || "",
-    address: payload.address || "",
-    role,
-    isActive: true,
-    isVerified: true,
-  };
-
-  return {
-    token: `demo-${role}-token`,
-    user,
-  };
-};
-
 export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem(TOKEN_KEY));
   const [user, setUser] = useState(() => {
@@ -52,7 +30,7 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const loadUser = async () => {
-      if (!token || token.startsWith("demo-")) {
+      if (!token) {
         setLoading(false);
         return;
       }
@@ -72,20 +50,7 @@ export const AuthProvider = ({ children }) => {
   }, [token]);
 
   const register = async (payload) => {
-    try {
-      return await authApi.register(payload);
-    } catch (error) {
-      if (!isNetworkError(error)) throw error;
-      const data = createDemoAuth(payload);
-      saveSession(data);
-      return data;
-    }
-  };
-
-  const verifyEmail = async (payload) => {
-    const data = await authApi.verifyEmail(payload);
-    saveSession(data);
-    return data;
+    return authApi.register(payload);
   };
 
   const resendVerification = async (payload) => {
@@ -93,21 +58,9 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = async (payload) => {
-    try {
-      const data = await authApi.login(payload);
-      saveSession(data);
-      return data;
-    } catch (error) {
-      if (!isNetworkError(error)) throw error;
-
-      const role =
-        payload.email === "admin@foodapp.com" && payload.password === "Admin123456"
-          ? "admin"
-          : "user";
-      const data = createDemoAuth(payload, role);
-      saveSession(data);
-      return data;
-    }
+    const data = await authApi.login(payload);
+    saveSession(data);
+    return data;
   };
 
   const value = useMemo(
@@ -118,7 +71,6 @@ export const AuthProvider = ({ children }) => {
       isAuthenticated: Boolean(token && user),
       isAdmin: user?.role === "admin",
       register,
-      verifyEmail,
       resendVerification,
       login,
       logout,

@@ -15,10 +15,10 @@ router.post(
   asyncHandler(authController.register),
 );
 
-router.post(
-  "/verify-email",
-  validation(authSchema.verifyEmail),
-  asyncHandler(authController.verifyEmail),
+router.get(
+  "/activate-email",
+  validation(authSchema.activateEmail),
+  asyncHandler(authController.activateEmail),
 );
 
 router.post(

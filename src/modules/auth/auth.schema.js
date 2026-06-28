@@ -23,11 +23,9 @@ export const login = Joi.object({
   password: Joi.string().required(),
 });
 
-export const verifyEmail = Joi.object({
+export const activateEmail = Joi.object({
   email: Joi.string().email().required(),
-  otp: Joi.string().pattern(/^[0-9]{6}$/).required().messages({
-    "string.pattern.base": "Verification code must be 6 digits",
-  }),
+  token: Joi.string().hex().length(64).required(),
 });
 
 export const resendVerification = Joi.object({

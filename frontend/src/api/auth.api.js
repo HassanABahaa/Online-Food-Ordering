@@ -7,12 +7,6 @@ export const authApi = {
       body: JSON.stringify(payload),
     }),
 
-  verifyEmail: (payload) =>
-    request("/auth/verify-email", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    }),
-
   resendVerification: (payload) =>
     request("/auth/resend-verification", {
       method: "POST",

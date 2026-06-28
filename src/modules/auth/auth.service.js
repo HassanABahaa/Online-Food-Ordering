@@ -2,9 +2,9 @@ import bcryptjs from "bcryptjs";
 import crypto from "node:crypto";
 import jwt from "jsonwebtoken";
 import { User } from "../../../DB/models/user.model.js";
-import { sendVerificationEmail } from "../../utils/email.service.js";
+import { sendActivationEmail } from "../../utils/email.service.js";
 
-const OTP_TTL_MINUTES = 10;
+const ACTIVATION_TTL_MINUTES = 30;
 
 export const moduleStatus = () => {
   return {
@@ -12,7 +12,7 @@ export const moduleStatus = () => {
     status: "ready",
     endpoints: [
       "POST /auth/register",
-      "POST /auth/verify-email",
+      "GET /auth/activate-email",
       "POST /auth/resend-verification",
       "POST /auth/login",
       "GET /auth/me",
@@ -46,20 +46,43 @@ const formatUser = (user) => {
   };
 };
 
-const createOtp = () => String(crypto.randomInt(100000, 1000000));
+const createActivationToken = () => crypto.randomBytes(32).toString("hex");
 
-const hashOtp = (otp) => crypto.createHash("sha256").update(otp).digest("hex");
+const hashActivationToken = (token) => crypto.createHash("sha256").update(token).digest("hex");
 
-const attachVerificationOtp = async (user) => {
-  const otp = createOtp();
-  user.emailOtpHash = hashOtp(otp);
-  user.emailOtpExpires = new Date(Date.now() + OTP_TTL_MINUTES * 60 * 1000);
+const getApiUrl = () => (process.env.API_URL || "http://localhost:5000").replace(/\/$/, "");
+
+const getFrontendUrl = () => {
+  if (process.env.FRONTEND_URL) return process.env.FRONTEND_URL.replace(/\/$/, "");
+
+  const firstClientUrl = (process.env.CLIENT_URLS || "")
+    .split(",")
+    .map((url) => url.trim())
+    .find((url) => url && url !== "*");
+
+  return (firstClientUrl || "http://localhost:5173").replace(/\/$/, "");
+};
+
+const buildLoginRedirect = (status) => {
+  const url = new URL("/login", getFrontendUrl());
+  url.searchParams.set("verified", status);
+  return url.toString();
+};
+
+const attachActivationLink = async (user) => {
+  const rawToken = createActivationToken();
+  user.emailVerificationTokenHash = hashActivationToken(rawToken);
+  user.emailVerificationTokenExpires = new Date(Date.now() + ACTIVATION_TTL_MINUTES * 60 * 1000);
   await user.save();
 
-  await sendVerificationEmail({
+  const activationUrl = new URL("/auth/activate-email", getApiUrl());
+  activationUrl.searchParams.set("email", user.email);
+  activationUrl.searchParams.set("token", rawToken);
+
+  await sendActivationEmail({
     to: user.email,
     userName: user.userName,
-    otp,
+    activationLink: activationUrl.toString(),
   });
 };
 
@@ -72,7 +95,7 @@ export const register = async (payload) => {
     emailExist.password = payload.password;
     emailExist.phone = payload.phone;
     emailExist.address = payload.address;
-    await attachVerificationOtp(emailExist);
+    await attachActivationLink(emailExist);
 
     return {
       email: emailExist.email,
@@ -90,7 +113,7 @@ export const register = async (payload) => {
     isVerified: false,
   });
 
-  await attachVerificationOtp(user);
+  await attachActivationLink(user);
 
   return {
     email: user.email,
@@ -98,37 +121,33 @@ export const register = async (payload) => {
   };
 };
 
-export const verifyEmail = async ({ email, otp }) => {
+export const activateEmail = async ({ email, token }) => {
   const user = await User.findOne({ email: email.toLowerCase() });
 
   if (!user) {
-    throw new Error("Invalid email or verification code", { cause: 400 });
+    throw new Error("Invalid or expired activation link", { cause: 400 });
   }
 
   if (user.isVerified !== false) {
-    const token = generateToken(user);
-    return { token, user: formatUser(user) };
+    return { alreadyVerified: true, redirectUrl: buildLoginRedirect("already") };
   }
 
-  const otpExpired = !user.emailOtpExpires || user.emailOtpExpires.getTime() < Date.now();
-  const otpMatches = user.emailOtpHash && user.emailOtpHash === hashOtp(otp);
+  const tokenExpired =
+    !user.emailVerificationTokenExpires || user.emailVerificationTokenExpires.getTime() < Date.now();
+  const tokenMatches =
+    user.emailVerificationTokenHash && user.emailVerificationTokenHash === hashActivationToken(token);
 
-  if (otpExpired || !otpMatches) {
-    throw new Error("Invalid or expired verification code", { cause: 400 });
+  if (tokenExpired || !tokenMatches) {
+    throw new Error("Invalid or expired activation link", { cause: 400 });
   }
 
   user.isVerified = true;
   user.emailVerifiedAt = new Date();
-  user.emailOtpHash = undefined;
-  user.emailOtpExpires = undefined;
+  user.emailVerificationTokenHash = undefined;
+  user.emailVerificationTokenExpires = undefined;
   await user.save();
 
-  const token = generateToken(user);
-
-  return {
-    token,
-    user: formatUser(user),
-  };
+  return { redirectUrl: buildLoginRedirect("success") };
 };
 
 export const resendVerification = async ({ email }) => {
@@ -145,7 +164,7 @@ export const resendVerification = async ({ email }) => {
     };
   }
 
-  await attachVerificationOtp(user);
+  await attachActivationLink(user);
 
   return {
     email: user.email,
@@ -171,7 +190,7 @@ export const login = async ({ email, password }) => {
   }
 
   if (user.isVerified === false) {
-    throw new Error("Please verify your email before login", { cause: 403 });
+    throw new Error("Please activate your account from the email link before login", { cause: 403 });
   }
 
   const token = generateToken(user);

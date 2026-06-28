@@ -14,19 +14,15 @@ export const register = async (req, res) => {
 
   return res.status(201).json({
     success: true,
-    msg: "Verification code sent to your email",
+    msg: "Activation link sent to your email",
     data,
   });
 };
 
-export const verifyEmail = async (req, res) => {
-  const data = await authService.verifyEmail(req.body);
+export const activateEmail = async (req, res) => {
+  const data = await authService.activateEmail(req.query);
 
-  return res.status(200).json({
-    success: true,
-    msg: "Email verified successfully",
-    data,
-  });
+  return res.redirect(data.redirectUrl);
 };
 
 export const resendVerification = async (req, res) => {
@@ -34,7 +30,7 @@ export const resendVerification = async (req, res) => {
 
   return res.status(200).json({
     success: true,
-    msg: data.alreadyVerified ? "Email is already verified" : "Verification code sent to your email",
+    msg: data.alreadyVerified ? "Email is already activated" : "Activation link sent to your email",
     data,
   });
 };

@@ -1,4 +1,4 @@
-﻿import nodemailer from "nodemailer";
+import nodemailer from "nodemailer";
 
 const createTransporter = () => {
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
@@ -14,21 +14,25 @@ const createTransporter = () => {
   });
 };
 
-export const sendVerificationEmail = async ({ to, userName, otp }) => {
+export const sendActivationEmail = async ({ to, userName, activationLink }) => {
   const transporter = createTransporter();
 
   await transporter.sendMail({
     from: `"Electro Bites" <${process.env.EMAIL_USER}>`,
     to,
-    subject: "Verify your Electro Bites account",
+    subject: "Activate your Electro Bites account",
     html: `
-      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #111827;">
+      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #111827; max-width: 560px;">
         <h2 style="margin-bottom: 8px;">Welcome to Electro Bites, ${userName}</h2>
-        <p>Use this code to verify your account:</p>
-        <div style="font-size: 28px; font-weight: 700; letter-spacing: 6px; background: #f3f4f6; padding: 14px 18px; display: inline-block; border-radius: 8px;">
-          ${otp}
-        </div>
-        <p>This code expires in 10 minutes.</p>
+        <p>Please activate your account by clicking the button below.</p>
+        <p style="margin: 24px 0;">
+          <a href="${activationLink}" style="background: #16a34a; color: #ffffff; padding: 12px 18px; border-radius: 8px; text-decoration: none; font-weight: 700; display: inline-block;">
+            Activate account
+          </a>
+        </p>
+        <p>This activation link expires in 30 minutes.</p>
+        <p>If the button does not work, copy and paste this link into your browser:</p>
+        <p style="word-break: break-all; color: #2563eb;">${activationLink}</p>
         <p>If you did not create this account, you can ignore this email.</p>
       </div>
     `,

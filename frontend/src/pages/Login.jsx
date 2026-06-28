@@ -11,6 +11,13 @@ const Login = () => {
   const location = useLocation();
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
+  const verifiedStatus = new URLSearchParams(location.search).get("verified");
+  const successMessage =
+    verifiedStatus === "success"
+      ? "Account activated successfully. You can login now."
+      : verifiedStatus === "already"
+        ? "Your account is already activated. You can login."
+        : "";
   const [loading, setLoading] = useState(false);
 
   const updateField = (key, value) => setForm((current) => ({ ...current, [key]: value }));
@@ -34,6 +41,7 @@ const Login = () => {
     <main className="auth-page">
       <form className="form-panel" onSubmit={handleSubmit}>
         <h1>{t("login")}</h1>
+        {successMessage && <p className="form-success">{successMessage}</p>}
         {error && <p className="form-error">{error}</p>}
         <label>
           <span>{t("email")}</span>
